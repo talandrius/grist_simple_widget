@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Simple Grist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+            font-size: 18px;
+            padding: 40px;
+        }
+        
+        .records-container {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .record-card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            transition: box-shadow 0.2s ease;
+        }
+        
+        .record-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .field {
+            margin-bottom: 10px;
+        }
+        
+        .field-label {
+            font-weight: bold;
+            color: #555;
+            margin-right: 10px;
+        }
+        
+        .field-value {
+            color: #333;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 40px;
+        }
+        
+        .stats {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Affichage des Données Grist</h1>
+        </div>
+        
+        <div id="loading" class="loading">
+            Chargement des données...
+        </div>
+        
+        <div id="stats" class="stats" style="display: none;">
+            <strong>Nombre total d'enregistrements : <span id="record-count">0</span></strong>
+        </div>
+        
+        <div id="records-container" class="records-container">
+            <!-- Les enregistrements seront affichés ici -->
+        </div>
+        
+        <div id="no-data" class="no-data" style="display: none;">
+            Aucune donnée disponible dans cette table.
+        </div>
+    </div>
+
+    <script type="module">
+        // Import de l'API Grist
+        import * as grist from 'https://docs.getgrist.com/grist-plugin-api.js';
+
+        let records = [];
+        let tableColumns = [];
+
+        // Fonction pour afficher les enregistrements
+        function displayRecords() {
+            const loadingDiv = document.getElementById('loading');
+            const statsDiv = document.getElementById('stats');
+            const recordsContainer = document.getElementById('records-container');
+            const noDataDiv = document.getElementById('no-data');
+            const recordCountSpan = document.getElementById('record-count');
+
+            // Masquer le loading
+            loadingDiv.style.display = 'none';
+
+            if (records.length === 0) {
+                noDataDiv.style.display = 'block';
+                statsDiv.style.display = 'none';
+                return;
+            }
+
+            // Afficher les statistiques
+            statsDiv.style.display = 'block';
+            recordCountSpan.textContent = records.length;
+
+            // Vider le conteneur
+            recordsContainer.innerHTML = '';
+
+            // Afficher chaque enregistrement
+            records.forEach((record, index) => {
+                const recordCard = document.createElement('div');
+                recordCard.className = 'record-card';
+
+                // Titre de l'enregistrement
+                const recordTitle = document.createElement('h3');
+                recordTitle.textContent = `Enregistrement #${index + 1}`;
+                recordTitle.style.marginTop = '0';
+                recordTitle.style.color = '#2196F3';
+                recordCard.appendChild(recordTitle);
+
+                // Afficher tous les champs de l'enregistrement
+                Object.keys(record).forEach(fieldName => {
+                    // Ignorer l'ID système
+                    if (fieldName === 'id') return;
+
+                    const fieldDiv = document.createElement('div');
+                    fieldDiv.className = 'field';
+
+                    const labelSpan = document.createElement('span');
+                    labelSpan.className = 'field-label';
+                    labelSpan.textContent = fieldName + ':';
+
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'field-value';
+                    
+                    // Gérer les valeurs nulles ou vides
+                    const value = record[fieldName];
+                    if (value === null || value === undefined || value === '') {
+                        valueSpan.textContent = '(vide)';
+                        valueSpan.style.fontStyle = 'italic';
+                        valueSpan.style.color = '#999';
+                    } else {
+                        valueSpan.textContent = value;
+                    }
+
+                    fieldDiv.appendChild(labelSpan);
+                    fieldDiv.appendChild(valueSpan);
+                    recordCard.appendChild(fieldDiv);
+                });
+
+                recordsContainer.appendChild(recordCard);
+            });
+        }
+
+        // Initialisation du widget Grist
+        grist.ready({
+            requiredAccess: 'read table'
+        });
+
+        // Écouter les changements de données
+        grist.onRecords(newRecords => {
+            records = newRecords;
+            displayRecords();
+        });
+
+        // Écouter les informations sur les colonnes (optionnel)
+        grist.onOptions((options, interaction) => {
+            // Vous pouvez utiliser les options pour personnaliser l'affichage
+            console.log('Options du widget:', options);
+        });
+
+        console.log('Widget Grist simple initialisé');
+    </script>
+</body>
+</html>
