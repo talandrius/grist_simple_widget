@@ -105,8 +105,8 @@
     </div>
 
     <script type="module">
-        // Import de l'API Grist
-        import * as grist from 'https://docs.getgrist.com/grist-plugin-api.js';
+        // Import de l'API Grist avec correctif CORS
+        import * as grist from 'https://docs.getgrist.com/grist-plugin-api.js?cors=true';
 
         let records = [];
         let tableColumns = [];
